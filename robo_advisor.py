@@ -6,14 +6,14 @@ Created on Wed Feb 20 14:45:27 2019
 @author: madeline
 """
 
-import dotenv
+import dotenv as de
 import json
 import requests
 import os
 import pandas as pd
 import datetime as datetime
 
-load_dotenv()
+de.load_dotenv()
 
 api_key = os.environ.get('MY_API_KEY')
 
@@ -95,8 +95,11 @@ def create_dataframe(stock_dictionary):
     temp_frame['low'] = low
     temp_frame['close'] = close
     temp_frame['volume'] = volume
-    
+
     return(temp_frame)
+    
+def to_csv(symbol, data_frame):
+    data_frame.to_csv('/data/'+ symbol + data_frame['timestamp'][0] +'.csv')
     
     
 test_frame = create_dataframe(parsed_response)
@@ -118,12 +121,14 @@ def calculate_min(data_frame):
 def printout(symbol, data_frame):
     date = datetime.datetime.now()
     recent_close = data_frame['close'][0]
+    
     print('Stock: ' + symbol)
-    print('Run at: ' + date.year + '-' + date.month + '-' + date.day)
-    print('Latest data from: ' + data_frame['date'][0])
-    print('Latest closing price: ')
-    print('Recent high price: ')
-    print('Recent low price: ')
+    print('Run at: ' + str(date.hour) + ':' + str(date.minute) + ', ' + 
+          str(date.year) + '-' + str(date.month) + '-' + str(date.day))
+    print('Latest data from: ' + data_frame['timestamp'][0])
+    print('Latest closing price: '+ recent_close)
+    print('Recent high price: ' + str(calculate_max(data_frame)))
+    print('Recent low price: ' + str(calculate_min(data_frame)))
     print('Recommendation: ')
     print('Explanation: ')
 
@@ -133,3 +138,4 @@ parsed = get_stock_data('MSFT')
 msft_data = create_dataframe(parsed)
 msft_high = calculate_max(msft_data)
 msft_low = calculate_min(msft_data)
+printout('MSFT', msft_data)
