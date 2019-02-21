@@ -19,21 +19,29 @@ de.load_dotenv()
 api_key = os.environ.get('MY_API_KEY')
 
 def user_input():
+    stock_list = []
     valid = True
-    symbol = input('Please input desired stock symbol: ')
-    if any(char.isdigit() for char in symbol):
-        valid = False
-        print('sorry, invalid stock symbol... please try again')
+    symbol = ''
         
-    if len(symbol) > 4:
-        valid = False
-        print('sorry, invalid stock symbol ... please try again')
-    
-    if valid == False:
-        symbol = input('Please input desired stock symbol: ')
-    
-    return(symbol)
-    
+    while symbol != 'DONE':
+        symbol = input('Please input desired stock symbol or DONE when done: ')
+        
+        if symbol == 'DONE':
+            stock_list = list(set(stock_list))
+            return(stock_list)
+        
+        if any(char.isdigit() for char in symbol):
+            #valid = False
+            print('sorry, invalid stock symbol... please try again')
+            
+        elif len(symbol) > 4:
+            #valid = False
+            print('sorry, invalid stock symbol ... please try again')
+        
+        else:
+            stock_list.append(symbol)
+
+#from api exercise, 2/13    
 def get_stock_data(symbol):
     
     api_key = os.environ.get('MY_API_KEY')
@@ -45,12 +53,15 @@ def get_stock_data(symbol):
     
     return(parsed_response)
     
-    #print('latest closing price: ' + parsed_response['Time Series (Daily)']['2019-02-19']['4. close'])
-
+#function to validate that the dictionary was correctly loaded
 def validate_stock_data(stock_dictionary):
     if 'Error message' in stock_dictionary:
         print('could not get stock dictionary...')
+        return(False)
+    else:
+        return(True)
 
+#function to print all data from the dictionary
 def print_stock_data(stock_dictionary):
     print('timestamp, open, high, low, close, volume')
 
@@ -61,7 +72,7 @@ def print_stock_data(stock_dictionary):
               ', ' + temp_path['5. volume'])
 
 def create_dataframe(stock_dictionary):
-    columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+    #columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     timestamp = []
     open_price = []
     high = []
@@ -124,27 +135,33 @@ def to_usd(price):
 def recommend_alg(data_frame):
     recent_low = calculate_min(data_frame)
     if float(data_frame['close'][0]) < 1.2*recent_low:
-        print('Buy')
+        #print('Buy')
         return(True)
     else:
-        print('Do not buy')
+        #print('Do not buy')
         return(False)
+
+def print_recommendation(recommendation):
+    if recommendation == True:
+        return('Buy')
+    elif recommendation == False:
+        return('Do not buy')
 
 def explanation(recommendation, data_frame):
     if recommendation == True:
-        print('Latest closing price (' + data_frame['close'][0] + ') ' +
+        return('Latest closing price (' + data_frame['close'][0] + ') ' +
               'is less than 20% above the recent low (' +
-              str(calculate_min(data_frame)) + '), therefore, it is safe to buy with minimal risk')
+              str(calculate_min(data_frame)) + '), therefore, it is safe to buy with minimal risk.')
     elif recommendation == False:
-        print('Latest closing price (' + data_frame['close'][0] + ') ' +
+        return('Latest closing price (' + data_frame['close'][0] + ') ' +
               'is more than 20% above the recent low (' +
-              str(calculate_min(data_frame)) + '), therefore, it is too risky to buy') 
-    
+              str(calculate_min(data_frame)) + '), therefore, it is too risky to buy.')   
 
 def printout(symbol, data_frame):
     date = datetime.datetime.now()
     recent_close = data_frame['close'][0]
-  
+    recommendation = recommend_alg(data_frame)
+    
     print('Stock: ' + symbol)
     print('Run at: ' + str(date.hour) + ':' + str(date.minute) + ', ' + 
           str(date.year) + '-' + str(date.month) + '-' + str(date.day))
@@ -152,9 +169,10 @@ def printout(symbol, data_frame):
     print('Latest closing price: '+ to_usd(recent_close))
     print('Recent high price: ' + to_usd(calculate_max(data_frame)))
     print('Recent low price: ' + to_usd(calculate_min(data_frame)))
-    print('Recommendation: ', recommend_alg)
-    print('Explanation: ')
+    print('Recommendation:', print_recommendation(recommendation))
+    print('Explanation:', explanation(recommendation, data_frame))
 
+'''
 symbol = 'MSFT'
 parsed = get_stock_data('MSFT')
 msft_data = create_dataframe(parsed)
@@ -163,13 +181,24 @@ msft_high = calculate_max(msft_data)
 msft_low = calculate_min(msft_data)
 recommend_alg(msft_data)
 to_csv('MSFT', msft_data)
-printout('MSFT', msft_data)
+printout('MSFT', msft_data)'''
 
-#try multiple stocks
-stock_list = ['MSFT','AAPL', 'AMZN']
 
-for stock in stock_list:
-    temp_parse = get_stock_data(stock)
-    temp_frame = create_dataframe(temp_parse)
-    printout(stock, temp_frame)
-    to_csv(stock, temp_frame)
+def multi_stock_printout(stock_list):
+    for stock in stock_list:
+        temp_parse = get_stock_data(stock)
+        valid_data = validate_stock_data(temp_parse)
+        if valid_data == True:
+            temp_frame = create_dataframe(temp_parse)
+            printout(stock, temp_frame)
+            to_csv(stock, temp_frame)
+        elif valid_data == False:
+            print('Error: could not retrieve ' + stock + 'stock.')
+
+def run_robo_advisor():
+    stock_list = user_input()
+    multi_stock_printout(stock_list)
+
+
+run_robo_advisor()
+    
