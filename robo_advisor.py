@@ -12,6 +12,7 @@ import requests
 import os
 import pandas as pd
 import datetime as datetime
+from statistics import mean
 
 de.load_dotenv()
 
@@ -120,6 +121,25 @@ def to_usd(price):
     price = float(price)
     return('${0:,.2f}'.format(price))
 
+def recommend_alg(data_frame):
+    recent_low = calculate_min(data_frame)
+    if float(data_frame['close'][0]) < 1.2*recent_low:
+        print('Buy')
+        return(True)
+    else:
+        print('Do not buy')
+        return(False)
+
+def explanation(recommendation, data_frame):
+    if recommendation == True:
+        print('Latest closing price (' + data_frame['close'][0] + ') ' +
+              'is less than 20% above the recent low (' +
+              str(calculate_min(data_frame)) + '), therefore, it is safe to buy with minimal risk')
+    elif recommendation == False:
+        print('Latest closing price (' + data_frame['close'][0] + ') ' +
+              'is more than 20% above the recent low (' +
+              str(calculate_min(data_frame)) + '), therefore, it is too risky to buy') 
+    
 
 def printout(symbol, data_frame):
     date = datetime.datetime.now()
@@ -132,15 +152,16 @@ def printout(symbol, data_frame):
     print('Latest closing price: '+ to_usd(recent_close))
     print('Recent high price: ' + to_usd(calculate_max(data_frame)))
     print('Recent low price: ' + to_usd(calculate_min(data_frame)))
-    print('Recommendation: ')
+    print('Recommendation: ', recommend_alg)
     print('Explanation: ')
 
 symbol = 'MSFT'
-
 parsed = get_stock_data('MSFT')
 msft_data = create_dataframe(parsed)
+test_close = msft_data['close'][0]
 msft_high = calculate_max(msft_data)
 msft_low = calculate_min(msft_data)
+recommend_alg(msft_data)
 to_csv('MSFT', msft_data)
 printout('MSFT', msft_data)
 
