@@ -99,10 +99,8 @@ def create_dataframe(stock_dictionary):
     return(temp_frame)
     
 def to_csv(symbol, data_frame):
-    data_frame.to_csv('/data/'+ symbol + data_frame['timestamp'][0] +'.csv')
-    
-    
-test_frame = create_dataframe(parsed_response)
+    data_frame.to_csv('/Users/madeline/Desktop/robo-advisor-project/data/'+
+                      symbol + '-' + data_frame['timestamp'][0] +'.csv')
 
 def calculate_max(data_frame):
     temp_frame = data_frame
@@ -118,17 +116,22 @@ def calculate_min(data_frame):
     min_low = min(temp_list)
     return(min_low)
 
+def to_usd(price):
+    price = float(price)
+    return('${0:,.2f}'.format(price))
+
+
 def printout(symbol, data_frame):
     date = datetime.datetime.now()
     recent_close = data_frame['close'][0]
-    
+  
     print('Stock: ' + symbol)
     print('Run at: ' + str(date.hour) + ':' + str(date.minute) + ', ' + 
           str(date.year) + '-' + str(date.month) + '-' + str(date.day))
     print('Latest data from: ' + data_frame['timestamp'][0])
-    print('Latest closing price: '+ recent_close)
-    print('Recent high price: ' + str(calculate_max(data_frame)))
-    print('Recent low price: ' + str(calculate_min(data_frame)))
+    print('Latest closing price: '+ to_usd(recent_close))
+    print('Recent high price: ' + to_usd(calculate_max(data_frame)))
+    print('Recent low price: ' + to_usd(calculate_min(data_frame)))
     print('Recommendation: ')
     print('Explanation: ')
 
@@ -138,4 +141,14 @@ parsed = get_stock_data('MSFT')
 msft_data = create_dataframe(parsed)
 msft_high = calculate_max(msft_data)
 msft_low = calculate_min(msft_data)
+to_csv('MSFT', msft_data)
 printout('MSFT', msft_data)
+
+#try multiple stocks
+stock_list = ['MSFT','AAPL', 'AMZN']
+
+for stock in stock_list:
+    temp_parse = get_stock_data(stock)
+    temp_frame = create_dataframe(temp_parse)
+    printout(stock, temp_frame)
+    to_csv(stock, temp_frame)
