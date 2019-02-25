@@ -277,5 +277,5 @@ def run_robo_advisor():
     stock_list = user_input()
     multi_stock_printout(stock_list)
 
-#run_robo_advisor()
+run_robo_advisor()
     
