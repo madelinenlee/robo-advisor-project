@@ -131,9 +131,10 @@ def create_dataframe(symbol, stock_dictionary):
     return(temp_frame)
    
 #function to write dataframe to csv in folder 'data'
+#note: this function only works if you run the script in the directory
+#above 'app' folder --> thinking about deleting app folder 
 def to_csv(symbol, data_frame):
-    csv_file_path = os.path.join(os.path.dirname('__file__'),
-                                 "data", symbol + '-' + data_frame['timestamp'][0] +'.csv')
+    csv_file_path = os.path.join("../data", symbol + '-' + data_frame['timestamp'][0] +'.csv')
     data_frame.to_csv(csv_file_path)
 
 #function to calculate recent high
