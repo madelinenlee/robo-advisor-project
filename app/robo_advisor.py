@@ -31,6 +31,7 @@ import plotly.graph_objs as go
 #from plotly.tools import FigureFactory as FF
 
 
+#user input function
 def user_input():
     stock_list = []
     #valid = True
@@ -87,18 +88,17 @@ def print_stock_data(stock_dictionary):
               ', ' + temp_path['3. low'] + ', ' + temp_path['4. close'] +
               ', ' + temp_path['5. volume'])
 
+#function to create dataframe of stock data of one company
 def create_dataframe(symbol, stock_dictionary):
-    #columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-    #stock_dictionary = get_stock_data(symbol)
-    #print(stock_dictionary)
+
     timestamp = []
     open_price = []
     high = []
     low = []
     close = []
     volume = []
+    symbol_list = []
     
-    #print('creating empty dataframe...')
     temp_frame = pd.DataFrame()
     
     for i in stock_dictionary['Time Series (Daily)']:
@@ -109,6 +109,7 @@ def create_dataframe(symbol, stock_dictionary):
         low.append(temp_path['3. low'])
         close.append(temp_path['4. close'])
         volume.append(temp_path['5. volume'])
+        symbol_list.append(symbol)
 
     
     timestamp = pd.Series(timestamp)
@@ -117,8 +118,9 @@ def create_dataframe(symbol, stock_dictionary):
     low = pd.Series(low)
     close = pd.Series(close)
     volume = pd.Series(volume)
+    symbol_list = pd.Series(symbol_list)
     
-    temp_frame['symbol'] = symbol
+    temp_frame['symbol'] = symbol_list
     temp_frame['timestamp'] = timestamp
     temp_frame['open_price'] = open_price
     temp_frame['high'] = high
@@ -128,13 +130,13 @@ def create_dataframe(symbol, stock_dictionary):
 
     return(temp_frame)
    
-
+#function to write dataframe to csv in folder 'data'
 def to_csv(symbol, data_frame):
-    #os.getcwd()
     csv_file_path = os.path.join(os.path.dirname('__file__'),
                                  "data", symbol + '-' + data_frame['timestamp'][0] +'.csv')
     data_frame.to_csv(csv_file_path)
 
+#function to calculate recent high
 def calculate_max(data_frame):
     temp_frame = data_frame
     temp_list = temp_frame['high'].tolist()
@@ -142,6 +144,7 @@ def calculate_max(data_frame):
     max_high = max(temp_list)
     return(max_high)
 
+#function to calculate recent low
 def calculate_min(data_frame):
     temp_frame = data_frame
     temp_list = temp_frame['low'].tolist()
@@ -149,42 +152,45 @@ def calculate_min(data_frame):
     min_low = min(temp_list)
     return(min_low)
 
+#function to convert any price to correct string format
 def to_usd(price):
     price = float(price)
     return('${0:,.2f}'.format(price))
 
+#function returns T/F based on stock data if user should buy or not
 def recommend_alg(data_frame):
     recent_low = calculate_min(data_frame)
     if float(data_frame['close'][0]) < 1.2*recent_low:
-        #print('Buy')
         return(True)
     else:
-        #print('Do not buy')
         return(False)
 
+#function prints recommendation
 def print_recommendation(recommendation):
     if recommendation == True:
         return('Buy')
     elif recommendation == False:
         return('Do not buy')
 
+#function prints explanation
 def explanation(recommendation, data_frame):
     if recommendation == True:
-        return('Latest closing price (' + data_frame['close'][0] + ') ' +
+        return('Latest closing price (' + to_usd(data_frame['close'][0]) + ') ' +
               'is less than 20% above the recent low (' +
-              str(calculate_min(data_frame)) + '), therefore, it is safe to buy with minimal risk.')
+              to_usd(calculate_min(data_frame)) + '), therefore, it is safe to buy with minimal risk.')
     elif recommendation == False:
-        return('Latest closing price (' + data_frame['close'][0] + ') ' +
+        return('Latest closing price (' + to_usd(data_frame['close'][0]) + ') ' +
               'is more than 20% above the recent low (' +
-              str(calculate_min(data_frame)) + '), therefore, it is too risky to buy.')   
+              to_usd(calculate_min(data_frame)) + '), therefore, it is too risky to buy.')   
 
+#function to correctly output information for each stock
 def printout(symbol, data_frame):
     date_now = datetime.datetime.now()
     recent_close = data_frame['close'][0]
     recommendation = recommend_alg(data_frame)
     
     print('Stock: ' + symbol)
-    print('Run at: ' + str(date_now.hour) + ':' + str(date_now.minute) + ', ' + 
+    print('Run at: ' + '{:02d}'.format(date_now.hour) + ':' + '{:02d}'.format(date_now.minute) + ', ' + 
           str(date_now.year) + '-' + str(date_now.month) + '-' + str(date_now.day))
     print('Latest data from: ' + data_frame['timestamp'][0])
     print('Latest closing price: '+ to_usd(recent_close))
@@ -194,18 +200,14 @@ def printout(symbol, data_frame):
     print('Explanation:', explanation(recommendation, data_frame))
     print('\n')
 
+#function to concat dataframes together (multuple stocks)
 def append_data_frame(data_list):
 
     final_frame = pd.concat(data_list).reset_index(drop=True)
     
     return(final_frame)
 
-stock_list = ['MSFT','AMZN', 'AAPL']
-
-#test_frame = append_data_frame(stock_list)
-
-#plot_prices_over_time(test_frame)
-
+#function to plot closing prices over time 
 def plot_prices_over_time(data_frame):
     #note: only have up to 13 distinct colors, so can only plot 13 stocks
     #to compare at a time ... 
@@ -225,6 +227,7 @@ def plot_prices_over_time(data_frame):
                                  y = temp_frame['close'],
                                  name = stock_list[i],
                                  line = dict(color = colors[i]))
+        
         data_list.append(temp_scatter)
 
     
@@ -238,38 +241,41 @@ def plot_prices_over_time(data_frame):
                     )
               )
                   
-    fig = dict(data = data_list, layout = layout)
+    fig = dict(data =data_list, layout=layout)
     py.iplot(fig, filename = 'closing-prices-over-time')
 
 
+#function to handle multiple stocks
 def multi_stock_printout(stock_list):
     data_list = []
     for stock in stock_list:
+        print(stock)
         temp_parse = get_stock_data(stock)
-        print('parsed')
+        #print('parsed')
         valid_data = validate_stock_data(temp_parse)
         if valid_data == True:
-            print('validated')
+            #print('validated')
             stock_frame = create_dataframe(stock, temp_parse)
             data_list.append(stock_frame)
-            print('dataframe created')
+            #print('dataframe created')
             printout(stock, stock_frame)
             to_csv(stock, stock_frame)
-            print('to csv done')
+            #print('to csv done')
                   
         elif valid_data == False:
             print('Error: could not retrieve ' + stock + 'stock.')
     
-    multi_stock_frame = append_data_frame(data_list)        
+
+    multi_stock_frame = append_data_frame(data_list)
+
     plot_prices_over_time(multi_stock_frame)  
     print('view your plot of closing price vs time at https://plot.ly/~madelinelee/81/closing-price-vs-time-per-stock/#/')      
 
-#multi_stock_printout(stock_list)
 
+#function to run entire robo-advisor project
 def run_robo_advisor():
     stock_list = user_input()
     multi_stock_printout(stock_list)
-
 
 #run_robo_advisor()
     
