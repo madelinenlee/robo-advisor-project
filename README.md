@@ -3,12 +3,12 @@
 goal: create a program that can take any stock symbol, or a list of stock symbols, and generate a recommendation to the user about whether to buy the stock or not. Output stock data for that time period to a CSV, in a folder called 'data'.
 
 PACKAGES REQUIRED:
-plotly
-dotenv
-os
-pandas
-numpy
-datetime
+plotly\n
+dotenv\n
+os\n
+pandas\n
+numpy\n
+datetime\n
 
 FUNCTIONS:
 user_input()
